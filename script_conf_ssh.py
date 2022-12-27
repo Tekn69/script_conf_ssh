@@ -74,11 +74,11 @@ def save_ssh(connexion):
     except NetMikoTimeoutException:
         error(f'Connection timeout while saving: {connexion.host}')
     except EOFError:
-        error(f'End of File while attempting device: {connexion.host}')
+        error(f'End of File while saving: {connexion.host}')
     except SSHException:
-        error(f'SSH issue while executing commands: {connexion.host}')
+        error(f'SSH issue while while saving: {connexion.host}')
     except Exception as unknown_error:
-        error(f'Some other error while executing commands: {connexion.host} {unknown_error.__str__()}')
+        error(f'Some other error while saving: {connexion.host} {unknown_error.__str__()}')
 
 
 def disconnect_ssh():
