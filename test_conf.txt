@@ -1,1 +1,1 @@
-delete vlan test
+sh power

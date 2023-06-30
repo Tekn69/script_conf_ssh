@@ -1,0 +1,3 @@
+sh ver | grep "Switch   "
+sh power | grep PartInfo
+debug hal show optic-info port-list | grep "Serial Number"

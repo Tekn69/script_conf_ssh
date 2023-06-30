@@ -1,34 +1,43 @@
+import threading
+import time
 from netmiko import *
-import logging
-import subprocess
-from ipaddress import ip_address, ip_network
+from ipaddress import ip_network
 import concurrent.futures
 from getpass4 import getpass
 from colorama import init
 from paramiko.ssh_exception import SSHException, AuthenticationException
 from termcolor import colored
 import os
+from io import *
 
 
 def ping(ip_addr):
-    requete = os.popen(f"ping -n 2 -w 2000 {ip_addr}")
-    response = "".join(requete.readlines())
+    response = "".join(os.popen(f"ping -n 2 -w 2000 {ip_addr}").readlines())
     if "TTL=" not in response:
         inactive_hosts.append(ip_addr)
     else:
         active_hosts.append(ip_addr)
 
-def error(error_message : str):
+
+def error(error_message: str):
     init()
-    print(error_message)
+    print(colored(error_message, 'red'))
     connected = False
 
+
+def save_log(log_bytes: BufferedIOBase):
+    with lock:
+        log_bytes.seek(0)
+        lecture_log = log_bytes.read()
+        log_str = lecture_log.decode()
+        with open(log_path, 'a') as f:
+            f.write(log_str+"\n\n\nNew Connection\n\n")
 
 
 def conf_ssh(host):
     try:  # si pas d'erreur
 
-        net_connect =  ConnectHandler(**devices[host])  # debut de la connexion
+        net_connect = ConnectHandler(**devices[host])  # debut de la connexion
         try:
             net_connect.disable_paging()
 
@@ -38,9 +47,18 @@ def conf_ssh(host):
             if not net_connect.check_config_mode():  # auto conf t
                 net_connect.config_mode()
 
-            output = net_connect.send_config_from_file(file)
+            output = ""
 
-            print(f'======= IP: {host} ==========\n'+output+'\n==================================== \n')
+            with open(file, "r") as cfg_file:
+                commands = cfg_file.readlines()
+
+            prompt = net_connect.find_prompt()
+
+            for command in commands:
+                output += prompt + " " + command.removesuffix("\n") + \
+                          net_connect.send_command(command, expect_string=prompt, read_timeout=100000) + "\n"
+
+            print(f'======= IP: {host} ==========\n' + output + '\n==================================== \n')
 
             connexions_ssh.append(net_connect)
 
@@ -52,7 +70,6 @@ def conf_ssh(host):
             error(f'SSH issue while executing commands: {host}')
         except Exception as unknown_error:
             error(f'Some other error while executing commands: {host} {unknown_error.__str__()}')
-
 
     except AuthenticationException:
         error(f'Authentication failure: {host}')
@@ -97,7 +114,6 @@ inactive_hosts = []
 
 print("\nRecovering IPs from the network...")
 
-
 executor = concurrent.futures.ThreadPoolExecutor(count)
 ping_hosts = concurrent.futures.wait([executor.submit(ping, str(ip)) for ip in hosts], return_when="ALL_COMPLETED")
 
@@ -114,6 +130,11 @@ device_type = input("Device_type (extreme_exos, extreme_vsp): ")
 username = input("login: ")
 passwd = getpass("password: ")
 
+# stockage des log dans une string pour chaque thread
+log_strIO = {}
+for ip in active_hosts:
+    log_strIO[ip] = BufferedRandom(BytesIO())
+
 devices = {}
 for ip in active_hosts:
     devices[ip] = {
@@ -121,12 +142,9 @@ for ip in active_hosts:
         "host": ip,
         "username": username,
         "password": passwd,
-        "keepalive": 5
+        "keepalive": 5,
+        "session_log": log_strIO[ip]
     }
-
-#A decommenter en cas de probleme
-#logging.basicConfig(filename=f'debug.log', level=logging.DEBUG)
-#logger = logging.getLogger("netmiko")
 
 file = input("Path to configuration file: ")
 
@@ -138,20 +156,37 @@ connexions_ssh = []
 
 executor = concurrent.futures.ThreadPoolExecutor(count)
 ssh_hosts = concurrent.futures.wait([executor.submit(conf_ssh, host) for host in active_hosts],
-                                     return_when="ALL_COMPLETED")
+                                    return_when="ALL_COMPLETED")
 
 print("End of configuration")
 
-reponse = input("Do you want to save configuration ? (yes/no): ")
+if connexions_ssh != []:
 
-while reponse not in ["yes", "no"]:
-    print("Invalid value")
     reponse = input("Do you want to save configuration ? (yes/no): ")
 
-if reponse == "yes":
-    executor = concurrent.futures.ThreadPoolExecutor(count)
-    save_ssh = concurrent.futures.wait([executor.submit(save_ssh,connexion) for connexion in connexions_ssh],
-                                        return_when="ALL_COMPLETED")
-else:
-    disconnect_ssh()
+    while reponse not in ["yes", "no"]:
+        print("Invalid value")
+        reponse = input("Do you want to save configuration ? (yes/no): ")
 
+    if reponse == "yes":
+        executor = concurrent.futures.ThreadPoolExecutor(count)
+        save_ssh = concurrent.futures.wait([executor.submit(save_ssh, connexion) for connexion in connexions_ssh],
+                                           return_when="ALL_COMPLETED")
+    else:
+        disconnect_ssh()
+
+lock = threading.Lock()
+
+if not os.path.exists("logs"):
+    os.makedirs("logs")
+
+log_path = os.path.join("logs", f"DEBUG-{time.strftime('%Y%m%d_%H%M%S')}.log")
+
+f = open(log_path, "w")
+f.write(f"New Session\n\n")
+f.close()
+
+for ip in active_hosts:
+    save_log(log_strIO[ip])
+
+print("End of script")
