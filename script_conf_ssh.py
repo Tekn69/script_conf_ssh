@@ -46,17 +46,11 @@ def conf_ssh(host):
 
             if not net_connect.check_config_mode():  # auto conf t
                 net_connect.config_mode()
-
+            
             output = ""
-
-            with open(file, "r") as cfg_file:
-                commands = cfg_file.readlines()
-
-            prompt = net_connect.find_prompt()
-
-            for command in commands:
-                output += prompt + " " + command.removesuffix("\n") + \
-                          net_connect.send_command(command, expect_string=prompt, read_timeout=100000) + "\n"
+            
+            tmp=net_connect.send_config_set(commands)
+            output += net_connect.find_prompt() + " "  + tmp + "\n"
 
             print(f'======= IP: {host} ==========\n' + output + '\n==================================== \n')
 
@@ -105,25 +99,31 @@ def disconnect_ssh():
         except:
             pass
 
+mode = input("Discovery mode ? yes/no : ").lower()
+if mode == "yes":
+	network = ip_network(input("\nNetwork address (IP/CIDR) : "))
+	hosts = network.hosts()
+	count = len(list(network.hosts()))
+	active_hosts = []
+	inactive_hosts = []
 
-network = ip_network(input("\nNetwork address (IP/CIDR) : "))
-hosts = network.hosts()
-count = len(list(network.hosts()))
-active_hosts = []
-inactive_hosts = []
+	print("\nRecovering IPs from the network...")
 
-print("\nRecovering IPs from the network...")
+	executor = concurrent.futures.ThreadPoolExecutor(count)
+	ping_hosts = concurrent.futures.wait([executor.submit(ping, str(ip)) for ip in hosts], return_when="ALL_COMPLETED")
 
-executor = concurrent.futures.ThreadPoolExecutor(count)
-ping_hosts = concurrent.futures.wait([executor.submit(ping, str(ip)) for ip in hosts], return_when="ALL_COMPLETED")
+	print("Recovery completed\n")
+	print(f'IP detected: {active_hosts}\n')
 
-print("Recovery completed\n")
-print(f'IP detected: {active_hosts}\n')
+	# exclusion de certaines IP
+	for ip in input("IP to exclude (format IP,IP...) : ").split(","):
+    		if ip in active_hosts:
+        		del active_hosts[active_hosts.index(ip)]
 
-# exclusion de certaines IP
-for ip in input("IP to exclude (format IP,IP...) : ").split(","):
-    if ip in active_hosts:
-        del active_hosts[active_hosts.index(ip)]
+else:
+    active_hosts = input("list of equipment (format IP,IP...) : ").split(",")
+    count = len(active_hosts)
+    
 
 # recuperation des informations
 device_type = input("Device_type (extreme_exos, extreme_vsp): ")
@@ -147,6 +147,11 @@ for ip in active_hosts:
     }
 
 file = input("Path to configuration file: ")
+
+with open(file, "r") as cfg_file:
+    commands = cfg_file.read().split('\n')
+    if commands[-1] == '':
+        del(commands[-1])
 
 print("File opened successfully\n")
 
