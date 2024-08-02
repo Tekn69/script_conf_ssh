@@ -2,3 +2,4 @@ netmiko
 getpass4
 colorama
 termcolor
+dnspython
