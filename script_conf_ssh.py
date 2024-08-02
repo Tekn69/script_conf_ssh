@@ -1,14 +1,59 @@
 import threading
 import time
-from netmiko import *
+from netmiko import ConnectHandler
 from ipaddress import ip_network
 import concurrent.futures
-from getpass4 import getpass
 from colorama import init
 from paramiko.ssh_exception import SSHException, AuthenticationException
 from termcolor import colored
 import os
+import dns.exception
+from dns.resolver import Resolver
 from io import *
+import sys
+import string
+
+def dns_lookup(input, timeout=3, server=[]):
+    """
+      Perform a simple DNS lookup, return results in a dictionary
+    """
+    resolver = Resolver()
+    resolver.timeout = float(timeout)
+    resolver.lifetime = float(timeout)
+
+    result = {}
+
+    if server:
+        resolver.nameservers = server
+    try:
+        records = resolver.resolve(input)
+        result = {
+            "addrs": [ii.address for ii in records],
+            "error": "",
+            "name": input,
+        }
+    except dns.resolver.NXDOMAIN as e:
+        result = {
+            "addrs": [],
+            "error": f"No such domain {input}",
+            "name": input,
+        }
+    except dns.resolver.Timeout:
+        result = {
+            "addrs": [],
+            "error": f"Timed out while resolving {input}",
+            "name": input,
+        }
+        # print(f"Timed out while resolving {input}")
+    except dns.exception.DNSException as e:
+        result = {
+            "addrs": [],
+            "error": f"Unhandled exception ({repr(e)})",
+            "name": input,
+        }
+        # print("Unhandled exception")
+
+    return result
 
 
 def ping(ip_addr):
@@ -121,7 +166,23 @@ if mode == "yes":
         		del active_hosts[active_hosts.index(ip)]
 
 else:
-    active_hosts = input("list of equipment (format IP,IP...) : ").split(",")
+    active_hosts = input("list of equipment (format IP,FQDN,IP...) : ").split(",")
+    resolver = dns.resolver.Resolver()
+    
+    for i in range(len(active_hosts)):
+        
+        for car in active_hosts[i]:
+            if car in string.ascii_letters:
+
+                reponse=dns_lookup(active_hosts[i])
+                if reponse['error'] != '':
+                    error(reponse['error'])
+                    sys.exit(0)
+                    
+                active_hosts[i] = reponse['addrs'][0]
+                break
+            
+    print(f'\n\nListe des équipements : {active_hosts}')
     count = len(active_hosts)
     
 
