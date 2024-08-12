@@ -110,9 +110,9 @@ def conf_ssh(host):
             output = ""
 
             tmp = net_connect.send_config_set(commands)
-            output += net_connect.find_prompt() + " " + tmp + "\n"
+            output += f'{net_connect.find_prompt()} {tmp} \n'
 
-            print(f'======= IP: {host} ==========\n' + output + '\n==================================== \n')
+            print(f'======= IP: {host} ==========\n{output}\n==================================== \n')
 
             connexions_ssh.append(net_connect)
 
