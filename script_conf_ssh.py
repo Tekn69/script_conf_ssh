@@ -1,3 +1,18 @@
+import os
+import sys
+import platform
+
+if platform.system() == 'Windows':
+    sys.path.append(os.path.dirname(os.path.abspath(__name__))+"\\deps_windows")
+elif platform.system() == 'Linux':
+    sys.path.append(os.path.dirname(os.path.abspath(__name__))+"/deps_linux")
+
+
+#eviter warning lors d'import netmiko
+#https://github.com/paramiko/paramiko/issues/2419
+import warnings
+warnings.filterwarnings(action='ignore', module='.*paramiko.*')
+
 import threading
 import time
 from netmiko import ConnectHandler, NetMikoTimeoutException
@@ -7,11 +22,9 @@ from colorama import init
 from paramiko.ssh_exception import SSHException, AuthenticationException
 from termcolor import colored
 import getpass
-import os
 import dns.exception
 from dns.resolver import Resolver
 from io import *
-import sys
 import string
 
 def dns_lookup(input, timeout=3, server=[]):
@@ -218,7 +231,8 @@ for ip in active_hosts:
 		"password": passwd,
 		"keepalive": 5,
 		"session_log": log_strIO[ip],
-		"port" : port
+		"port": port,
+        "global_delay_factor": 4
 	}
 
 file = input("Path to configuration file: ")
