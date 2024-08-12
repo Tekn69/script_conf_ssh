@@ -109,7 +109,7 @@ def conf_ssh(host):
 
             output = ""
 
-            tmp = net_connect.send_config_set(commands)
+            tmp = net_connect.send_config_set(commands, read_timeout=20000)
             output += f'{net_connect.find_prompt()} {tmp} \n'
 
             print(f'======= IP: {host} ==========\n{output}\n==================================== \n')
