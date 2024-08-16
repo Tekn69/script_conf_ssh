@@ -7,9 +7,9 @@ windows/python.exe script_conf_ssh.py
 
 # Linux
 
-Se déplacer dans le répertoire linux et télécharger miniconda à l'intérieur
+Créer le répertoire linux, se déplacer dedans et télécharger miniconda à l'intérieur
 ```
-cd linux/ && wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ./miniconda.sh
+mkdir linux && cd linux/ && wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ./miniconda.sh
 ```
 
 Installer miniconda dans le répertoire courant
