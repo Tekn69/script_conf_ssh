@@ -1,17 +1,22 @@
 Miniconda_3.12.4 amd64 :
 https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
 
-Rendre mini conda exécutable
+Télécharger miniconda dans le répertoire courant
 ```
-chmod +x ./miniconda_3.12.4.sh
-```
-
-Sélectionner l'environnement virtuel miniconda
-```
-source ~/miniconda3/bin/activate
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ./miniconda.sh
 ```
 
-On peut désormais exécuter python
+Installer miniconda dans le répertoire courant
 ```
-python script_conf_ssh.py
+bash miniconda.sh -b -p ./miniconda
+```
+
+Activer le venv miniconda
+```
+source miniconda/bin/activate
+```
+
+Exécuter le script
+```
+cd .. && python script_conf_ssh.py
 ```
