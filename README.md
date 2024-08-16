@@ -1,6 +1,6 @@
 # Windows
 
-Exécuter directement le script
+Exécuter directement le script dans powershell
 ```powershell
 windows/python.exe script_conf_ssh.py
 ```
