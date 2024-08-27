@@ -232,7 +232,7 @@ for ip in active_hosts:
         "keepalive": 5,
         "session_log": log_strIO[ip],
         "port": port,
-        "global_delay_factor": 4
+        "global_delay_factor": 8
     }
 
 file = input("Path to configuration file: ")
