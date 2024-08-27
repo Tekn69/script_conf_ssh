@@ -91,7 +91,7 @@ def save_log(log_bytes: BufferedIOBase, host: str):
         lecture_log = log_bytes.read()
         log_str = lecture_log.decode()
         with open(log_path, 'a') as f:
-            f.write(f'\n\n======= IP: {host} ==========\n' + log_str + "\n====================================\n")
+            f.write(f'\n\n======= IP: {host} ==========\n' + log_str + "\n====================================\n\n\n")
 
 
 def conf_ssh(host):
