@@ -85,13 +85,13 @@ def error(error_message: str):
     connected = False
 
 
-def save_log(log_bytes: BufferedIOBase):
+def save_log(log_bytes: BufferedIOBase, host: str):
     with lock:
         log_bytes.seek(0)
         lecture_log = log_bytes.read()
         log_str = lecture_log.decode()
         with open(log_path, 'a') as f:
-            f.write(log_str + "\n\n\nNew Connection\n\n")
+            f.write(f'\n\n======= IP: {host} ==========\n' + log_str + "\n====================================\n")
 
 
 def conf_ssh(host):
@@ -109,8 +109,8 @@ def conf_ssh(host):
 
             output = ""
 
-            tmp = net_connect.send_config_set(commands, read_timeout=20000)
-            output += f'{net_connect.find_prompt()} {tmp} \n'
+            send_config = net_connect.send_config_set(commands, read_timeout=20000)
+            output += f'{net_connect.find_prompt()} {send_config} \n'
 
             print(f'======= IP: {host} ==========\n{output}\n==================================== \n')
 
@@ -281,6 +281,6 @@ f.write(f"New Session\n\n")
 f.close()
 
 for ip in active_hosts:
-    save_log(log_strIO[ip])
+    save_log(log_strIO[ip], ip)
 
 print("End of script")
