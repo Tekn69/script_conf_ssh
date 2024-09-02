@@ -5,9 +5,8 @@ Il inclut un système de log et de validation permettant de choisir de sauvegard
 Ce dépot contient toutes les dépendances et contient une version portable de python windows.<br>
 Pour linux, il faut télécharger une version portable avant d'exécuter le script.**
 
-# Exécution du script & installation
+# Installation
 
-Avant d'exécuter le script, il faut modifier le fichier de configuration et mettre les bonnes commandes. (voir rubrique)
 
 ## Windows
 
@@ -38,7 +37,9 @@ Exécuter le script
 cd .. && python script_conf_ssh.py
 ```
 
-# Déroulement du script
+# Exécution du script
+
+Avant d'exécuter le script, il faut modifier le fichier de configuration et mettre les bonnes commandes. (voir rubrique)
 
 ## Liste des équipements à configurer
 
