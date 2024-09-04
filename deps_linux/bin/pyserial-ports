@@ -1,4 +1,4 @@
-#!/tmp/miniconda3/bin/python
+#!/root/miniconda/envs/myenv/bin/python3.12
 # -*- coding: utf-8 -*-
 import re
 import sys
