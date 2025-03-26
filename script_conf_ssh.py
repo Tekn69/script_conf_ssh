@@ -185,6 +185,8 @@ else:
     active_hosts = input("list of equipment (format IP,FQDN,IP...) : ").split(",")
     resolver = dns.resolver.Resolver()
 
+    err = 0
+
     for i in range(len(active_hosts)):
 
         for car in active_hosts[i]:
@@ -193,11 +195,15 @@ else:
                 reponse = dns_lookup(active_hosts[i])
                 if reponse['error'] != '':
                     error(reponse['error'])
-                    sys.exit(0)
+                    err = 1
 
                 active_hosts[i] = reponse['addrs'][0]
                 break
 
+    if err == 1:
+        print('DNS resolution for all hosts failed exit...')
+        sys.exit(0)
+	    
     count = len(active_hosts)
 
 # recuperation des informations
